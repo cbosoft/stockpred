@@ -13,8 +13,7 @@ class StockData(Dataset):
         df = pd.read_sql('SELECT * FROM "BTC/USD";', conn)
         close = df['close'].values.astype('float32')
         delta_close = np.diff(close)
-        norm_delta = delta_close / np.std(delta_close)
-        self.close_price = torch.tensor(norm_delta)
+        self.close_price = torch.tensor(delta_close)
         self.context = context
         self.foresight = foresight
 
