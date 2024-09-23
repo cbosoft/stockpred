@@ -26,7 +26,7 @@ def main():
     args = parse_args()
     torch.set_float32_matmul_precision('high')
     data = StockData(context=args.context, foresight=args.foresight)
-    dl = DataLoader(data)
+    dl = DataLoader(data, batch_size=8, shuffle=True, drop_last=True)
     trainer = L.Trainer(logger=CSVLogger('.', name='runs'))
     for model_name in args.models:
         model = MODELS[model_name](context=args.context, foresight=args.foresight)
