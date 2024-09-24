@@ -12,8 +12,7 @@ class StockData(Dataset):
         conn = sqlite3.connect('data.db')
         df = pd.read_sql('SELECT * FROM "BTC/USD";', conn)
         close = df['close'].values.astype('float32')
-        delta_close = np.diff(close)
-        self.close_price = torch.tensor(delta_close)
+        self.close_price = torch.tensor(close)
         self.context = context
         self.foresight = foresight
 
@@ -23,5 +22,8 @@ class StockData(Dataset):
     def __getitem__(self, i: int):
         inp = self.close_price[ i               : i + self.context                  ]
         tgt = self.close_price[ i + self.context: i + self.context + self.foresight ]
+        ref = inp[-1]
+        inp = (inp - ref) / ref
+        tgt = (tgt - ref) / ref
         return inp, tgt
 
