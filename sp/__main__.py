@@ -46,7 +46,44 @@ class PlotCallback(Callback):
         plt.legend()
         plt.tight_layout()
         plt.savefig(log_dir / 'loss_plot.png')
+        plt.close()
 
+
+class PredPlotter(Callback):
+
+    def __init__(self, data, context, foresight):
+        super().__init__()
+        self.data = data
+        self.context = context
+        self.foresight = foresight
+
+    def on_fit_end(self, trainer, model):
+        model.eval()
+
+        n = len(self.data)
+        data = np.array(self.data) # create a copy
+
+        for i in range(0, n - self.context, self.foresight):
+            x = data[i:i+self.context]
+            ref = x[-1]
+            x = (x - ref) / ref
+            y_hat_i = model(torch.tensor(x).float().unsqueeze(0)).cpu().detach().numpy().squeeze(0)
+            lb = i + self.context
+            ub = min(n, i + self.context + self.foresight)
+            data[lb:ub] = y_hat_i[:ub-lb] * ref + ref
+
+        c = self.context - 1
+        i = np.arange(n)
+        left_i = i[:c]
+        right_i = i[c:]
+
+        plt.figure()
+        plt.plot(left_i, self.data[:c], 'C0-')
+        plt.plot(right_i, self.data[c:], 'C0--')
+        plt.plot(right_i, data[c:], 'C1-')
+        log_dir = Path(trainer.log_dir)
+        plt.savefig(log_dir / 'pred_plot.png')
+        plt.save()
 
 
 def list_of_str(s: str) -> List[str]:
