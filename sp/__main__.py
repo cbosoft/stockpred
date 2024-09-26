@@ -64,12 +64,12 @@ def parse_args():
 def main():
     args = parse_args()
     torch.set_float32_matmul_precision('high')
-    data = StockData(context=args.context, foresight=args.foresight)
+    train_data, valid_data, test_data = StockData.load(context=args.context, foresight=args.foresight)
 
-    pivot = int(len(data) * 0.8)
-    train_data, valid_data = torch.utils.data.random_split(data, [pivot, len(data) - pivot])
-    train_dl = DataLoader(train_data, batch_size=8, shuffle=True, drop_last=True)
-    valid_dl = DataLoader(valid_data, batch_size=8, shuffle=True, drop_last=True)
+    train_dl = DataLoader(train_data, batch_size=8, shuffle=True)
+    valid_dl = DataLoader(valid_data, batch_size=8)
+    test_dl = DataLoader(test_data)
+
     for model_name in args.models:
         model = MODELS[model_name](context=args.context, foresight=args.foresight)
         trainer = L.Trainer(logger=CSVLogger('.', name='runs'), callbacks=[DeploymentCallback(), ModelCheckpoint(monitor='valid_loss', every_n_epochs=100), PlotCallback()], max_epochs=10)
