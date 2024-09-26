@@ -95,6 +95,7 @@ def parse_args():
     parser.add_argument('--context', '-c', type=int, default=12)
     parser.add_argument('--foresight', '-f', type=int, default=6)
     parser.add_argument('--models', '-m', type=list_of_str, default='lstm')
+    parser.add_argument('--epochs', '-e', type=int, default=1000)
     return parser.parse_args()
 
 
@@ -109,8 +110,9 @@ def main():
 
     for model_name in args.models:
         model = MODELS[model_name](context=args.context, foresight=args.foresight)
-        trainer = L.Trainer(logger=CSVLogger('.', name='runs'), callbacks=[DeploymentCallback(), ModelCheckpoint(monitor='valid_loss', every_n_epochs=100), PlotCallback()], max_epochs=10)
+        trainer = L.Trainer(logger=CSVLogger('.', name='runs'), callbacks=[DeploymentCallback(), ModelCheckpoint(monitor='valid_loss', every_n_epochs=100), PlotCallback(), PredPlotter(test_data.data, args.context, args.foresight)], max_epochs=args.epochs)
         trainer.fit(model=model, train_dataloaders=train_dl, val_dataloaders=valid_dl)
+        trainer.test(model=model, dataloaders=test_dl)
     return trainer
 
 

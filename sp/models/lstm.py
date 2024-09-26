@@ -30,6 +30,13 @@ class LSTMBasedStockPred(L.LightningModule):
         self.log('valid_loss', loss, prog_bar=True)
         return loss
 
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self(x)
+        loss = nn.functional.mse_loss(y_hat, y)
+        self.log('test_loss', loss)
+        return loss
+
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
